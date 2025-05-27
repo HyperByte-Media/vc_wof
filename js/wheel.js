@@ -4,7 +4,7 @@ class Wheel {
         this.ctx = this.canvas.getContext('2d');
         this.centerX = this.canvas.width / 2;
         this.centerY = this.canvas.height / 2;
-        this.radius = Math.min(this.centerX, this.centerY) * 1.1;
+        this.radius = Math.min(this.centerX, this.centerY) * 0.9;  // Changed from 0.45 to 0.9 for better scaling
         
         // Wheel segments with values and colors
         this.segments = [
@@ -81,7 +81,8 @@ class Wheel {
             this.ctx.fillStyle = '#fff';
             this.ctx.strokeStyle = '#000';
             this.ctx.lineWidth = 0;
-            this.ctx.font = 'bold 16px Arial';
+            const baseFontSize = Math.max(16, Math.min(24, this.radius * 0.08));  // Adjust these values as needed
+            this.ctx.font = `bold ${baseFontSize}px Arial`;
             
             // Draw text with outline for better visibility
             this.ctx.strokeText(segment.text, this.radius * 0.6, 0);
@@ -101,9 +102,9 @@ class Wheel {
         
         // Draw pointer
         this.ctx.beginPath();
-        this.ctx.moveTo(this.centerX, this.centerY - this.radius - 20);
-        this.ctx.lineTo(this.centerX - 15, this.centerY - this.radius + 5);
-        this.ctx.lineTo(this.centerX + 15, this.centerY - this.radius + 5);
+        this.ctx.moveTo(this.centerX, this.centerY - this.radius - 30);
+        this.ctx.lineTo(this.centerX - 20, this.centerY - this.radius + 5);
+        this.ctx.lineTo(this.centerX + 20, this.centerY - this.radius + 5);
         this.ctx.closePath();
         this.ctx.fillStyle = '#FF3D00';
         this.ctx.fill();
@@ -118,23 +119,46 @@ class Wheel {
         this.isSpinning = true;
         this.currentResult = null;
         
-        // Random speed between 0.1 and 0.2 radians per frame
-        this.rotationSpeed = 0.1 + Math.random() * 0.1;
-        
-        // Random number of full rotations (5-10)
-        this.targetRotations = 5 + Math.floor(Math.random() * 6);
+        // Increase initial speed for faster spin
+        this.rotationSpeed = 0.3 + Math.random() * 0.2;  // Faster initial spin
+        this.baseDeceleration = 0.0005;  // Base deceleration rate
+        this.decelerationVariance = 0.0002;  // Random variation in deceleration
+        this.currentDeceleration = this.baseDeceleration + (Math.random() * this.decelerationVariance);
+
+         // Target rotations with some randomness
+        this.targetRotations = 5 + Math.floor(Math.random() * 8);  // 5-12 rotations
         this.rotations = 0;
         
+        // Use requestAnimationFrame with timestamp for smoother animation
+        this.lastFrameTime = performance.now();
         this.animate();
     }
     
     animate() {
+        const now = performance.now();
+        const deltaTime = now - this.lastFrameTime;
+        this.lastFrameTime = now;
+        
+        // Update angle based on time delta for smooth animation
+        const frameRate = 30; // Target FPS
+        const frameTime = 1000 / frameRate;
+        const timeScale = deltaTime / frameTime;
+
         // Update angle
-        this.angle += this.rotationSpeed;
+        this.angle += this.rotationSpeed * timeScale;
         
-        // Apply friction
-        this.rotationSpeed *= 0.995;
+        // Apply more realistic deceleration that increases as the wheel slows
+        // This creates the "weighted" feel of a real wheel
+        const decelerationFactor = 1.0 + (0.5 * (1.0 - (this.rotationSpeed / 0.3))); // More deceleration as it slows
+        this.rotationSpeed = Math.max(0, this.rotationSpeed - (this.currentDeceleration * decelerationFactor * timeScale));
         
+            // Add slight random variation to deceleration for more natural feel
+        if (Math.random() > 0.95) {
+        this.currentDeceleration = this.baseDeceleration + 
+            (Math.random() * this.decelerationVariance * 2) - 
+            this.decelerationVariance;
+        }
+
         // Check for full rotation
         if (this.angle >= Math.PI * 2) {
             this.angle -= Math.PI * 2;
@@ -145,10 +169,19 @@ class Wheel {
         this.draw();
         
         // Check if wheel should stop
-        if (this.rotationSpeed < 0.001 && this.rotations >= this.targetRotations) {
-            this.isSpinning = false;
-            this.rotationSpeed = 0;
-            this.calculateResult();
+        const isStopped = this.rotationSpeed <= 0.001;
+        const hasCompletedRotations = this.rotations >= this.targetRotations;
+        const shouldStop = !this.isSpinning || (isStopped && hasCompletedRotations);
+        
+        if (shouldStop) {
+            if (isStopped) {
+                this.isSpinning = false;
+                this.rotationSpeed = 0;
+                this.calculateResult();
+            } else {
+                // If we're stopping but not fully stopped, continue decelerating
+                requestAnimationFrame(this.animate);
+            }
         } else {
             requestAnimationFrame(this.animate);
         }
