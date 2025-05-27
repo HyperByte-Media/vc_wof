@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wheel of Fortune</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>Wheel of Fortune</h1>
+            <div class="score-display">
+                <div class="player" id="player1">
+                    <span class="player-name">Player 1</span>
+                    <span class="player-score">$0</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="game-board">
+            <div class="wheel-container">
+                <canvas id="wheelCanvas" width="400" height="400"></canvas>
+                <button id="spinButton" class="action-button">SPIN</button>
+            </div>
+
+            <div class="puzzle-area">
+                <div class="category-display" id="category">Category: <span>Famous Phrases</span></div>
+                <div class="puzzle-display" id="puzzleBoard"></div>
+                <div class="controls">
+                    <div class="letter-buttons" id="letterButtons"></div>
+                    <button id="buyVowel" class="action-button" disabled>Buy Vowel ($250)</button>
+                    <button id="solvePuzzle" class="action-button">Solve Puzzle</button>
+                </div>
+            </div>
+        </main>
+
+        <div class="message-overlay" id="messageOverlay">
+            <div class="message-box">
+                <h2 id="messageText"></h2>
+                <button id="messageButton" class="action-button">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="letterRevealSound" src="sounds/letter_reveal.mp3" preload="auto"></audio>
+    <audio id="wrongAnswerSound" src="sounds/wrong_answer.mp3" preload="auto"></audio>
+
+    <!-- JavaScript Modules -->
+    <script type="module" src="js/game.js"></script>
+</body>
+</html>
